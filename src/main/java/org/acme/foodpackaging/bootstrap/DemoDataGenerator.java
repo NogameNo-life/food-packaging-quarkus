@@ -6,40 +6,28 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
-import io.quarkus.runtime.StartupEvent;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import org.acme.foodpackaging.domain.Job;
 import org.acme.foodpackaging.domain.Line;
 import org.acme.foodpackaging.domain.PackagingSchedule;
 import org.acme.foodpackaging.domain.Product;
 import org.acme.foodpackaging.domain.WorkCalendar;
 import org.acme.foodpackaging.persistence.PackagingScheduleRepository;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 
 public class DemoDataGenerator {
 
-    @Inject
-    PackagingScheduleRepository repository;
+    private final PackagingScheduleRepository repository;
+    private final int lineCount;
+    private final int jobCount;
 
-    @ConfigProperty(name = "demo-data.line-count", defaultValue = "5")
-    int lineCount;
-    @ConfigProperty(name = "demo-data.job-count", defaultValue = "100")
-    int jobCount;
+    public DemoDataGenerator(PackagingScheduleRepository repository, int lineCount, int jobCount) {
+        this.repository = repository;
+        this.lineCount = lineCount;
+        this.jobCount = jobCount;
+    }
 
-    @Transactional
-    public void generateDemoData(@Observes StartupEvent startupEvent) {
+    public void generateDemoData() {
         int noCleaningMinutes = 10;
         int cleaningMinutesMinimum = 30;
         int cleaningMinutesMaximum = 60;
@@ -47,7 +35,7 @@ public class DemoDataGenerator {
         int jobDurationMinutesMaximum = 300;
         int averageCleaningAndJobDurationMinutes =
                 (2 * noCleaningMinutes + cleaningMinutesMinimum + cleaningMinutesMaximum) / 4
-                + (jobDurationMinutesMinimum + jobDurationMinutesMaximum) / 2;
+                        + (jobDurationMinutesMinimum + jobDurationMinutesMaximum) / 2;
 
         final LocalDate START_DATE = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.TUESDAY));
         final LocalDateTime START_DATE_TIME = LocalDateTime.of(START_DATE, LocalTime.MIDNIGHT);
@@ -56,7 +44,6 @@ public class DemoDataGenerator {
 
         Random random = new Random(37);
         PackagingSchedule solution = new PackagingSchedule();
-
         solution.setWorkCalendar(new WorkCalendar(START_DATE, END_DATE));
 
         Map<Product, Set<String>> ingredientMap = new HashMap<>(INGREDIENT_LIST.size() * PRODUCT_VARIATION_LIST.size() * 3);
@@ -74,6 +61,8 @@ public class DemoDataGenerator {
             ingredientMap.put(new Product(Long.toString(productId++), ingredient + " and " + ingredientB + " " + PRODUCT_VARIATION_LIST.get(2)), Set.of(ingredient, ingredientB));
             ingredientMap.put(new Product(Long.toString(productId++), ingredient + ", " + ingredientA + " and " + ingredientC + " " + PRODUCT_VARIATION_LIST.get(1)), Set.of(ingredient, ingredientA, ingredientC));
         }
+
+
         List<Product> products = new ArrayList<>(ingredientMap.keySet());
         for (Product product : products) {
             Map<Product, Duration> cleaningDurationMap = new HashMap<>(products.size());
@@ -116,19 +105,9 @@ public class DemoDataGenerator {
     }
 
     private static final List<String> INGREDIENT_LIST = List.of(
-            "Carrots",
-            "Peas",
-            "Cabbage",
-            "Tomato",
-            "Eggplant",
-            "Broccoli",
-            "Spinach",
-            "Pumpkin",
-            "Pepper",
-            "Onions");
-    private static final List<String> PRODUCT_VARIATION_LIST = List.of(
-            "small bag",
-            "medium bag",
-            "large bag");
+            "Carrots", "Peas", "Cabbage", "Tomato", "Eggplant",
+            "Broccoli", "Spinach", "Pumpkin", "Pepper", "Onions");
 
+    private static final List<String> PRODUCT_VARIATION_LIST = List.of(
+            "small bag", "medium bag", "large bag");
 }

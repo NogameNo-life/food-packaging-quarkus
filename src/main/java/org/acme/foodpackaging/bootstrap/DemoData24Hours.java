@@ -136,9 +136,8 @@ public class DemoData24Hours {
 
         solution.setLines(lines);
         solution.setProducts(products);
+        jobs.sort(Comparator.comparing(Job::getName));
         solution.setJobs(jobs);
-        System.out.println("Total jobs: " + jobs.size());
-        jobs.forEach(job -> System.out.println("Job: " + job.getName() + " Product: " + job.getProduct().getName()));
 
         repository.write(solution);
     }
