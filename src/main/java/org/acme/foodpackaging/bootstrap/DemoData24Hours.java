@@ -104,8 +104,8 @@ public class DemoData24Hours {
                         String snm = resultSet.getString("SNM");
                         String name = resultSet.getString("NAME");
 
-                        int jobQuantity = quantity / 200; // Это может быть 0!
-                        if (jobQuantity == 0) continue;
+                        int defaultDuration = 0; // Это может быть 0!
+                        if (quantity == 0) continue;
 
                         Product product = productMap.get(ean13);
                         if (product == null) {
@@ -118,7 +118,8 @@ public class DemoData24Hours {
                         Job job = createJob(
                                 String.valueOf(++id),
                                 product,
-                                jobQuantity,
+                                quantity,
+                                defaultDuration,
                                 DEFAULT_PRIORITY,
                                 START_DATE_TIME
                         );
@@ -245,7 +246,7 @@ public class DemoData24Hours {
         return true;
     }
 
-    private Job createJob(String id, Product product, int duration, int priority, LocalDateTime startDate) {
+    private Job createJob(String id, Product product, int quantity, int duration, int priority, LocalDateTime startDate) {
         Pattern pattern = Pattern.compile("\"([^\"]+)\"");
         String jobName = product.getName();
         Matcher matcher = pattern.matcher(jobName);
@@ -256,17 +257,16 @@ public class DemoData24Hours {
                 id,
                 jobName + " #" + id,
                 product,
-              Duration.ofMinutes(duration),
+                quantity,
+                Duration.ofMinutes(duration),
                 startDate,
-                startDate.plusHours(4), // Идеальное время завершения
-                startDate.plusHours(8), // Максимальное время завершения
+                startDate.plusHours(3), // Идеальное время завершения
+                startDate.plusHours(6), // Максимальное время завершения
                 priority,
                 false
         );
 
     }
-
-
 
 }
 
