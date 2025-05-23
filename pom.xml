@@ -54,7 +54,12 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-resteasy-jackson</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <version>12.8.1.jre11</version>
+      <scope>compile</scope>
+    </dependency>
     <!-- UI -->
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -184,12 +189,6 @@
           <name>container</name>
         </property>
       </activation>
-      <dependencies>
-        <dependency>
-          <groupId>io.quarkus</groupId>
-          <artifactId>quarkus-container-image-jib</artifactId>
-        </dependency>
-      </dependencies>
       <properties>
         <quarkus.container-image.build>true</quarkus.container-image.build>
       </properties>
@@ -219,15 +218,6 @@
           </dependency>
         </dependencies>
       </dependencyManagement>
-      <dependencies>
-        <dependency>
-          <groupId>ai.timefold.solver.enterprise</groupId>
-          <artifactId>timefold-solver-enterprise-quarkus</artifactId>
-        </dependency>
-      </dependencies>
-      <properties>
-        <quarkus.profile>enterprise</quarkus.profile>
-      </properties>
     </profile>
   </profiles>
 

@@ -10,6 +10,9 @@ public class Product {
     @PlanningId
     private String id;
     private String name;
+    private ProductType type;
+    private GlazeType glaze;
+    private boolean allergen;
     /** The map key is previous product on assembly line. */
     private Map<Product, Duration> cleaningDurations;
 
@@ -20,6 +23,20 @@ public class Product {
         this.id = id;
         this.name = name;
     }
+
+    public Product(String id, String name, ProductType type, boolean allergen) {
+        this.id = id;
+        this.name = name;
+        this.type = type;
+        this.glaze = GlazeType.fromProduct(id, type);
+        this.allergen = allergen;
+    }
+
+    public ProductType getType() { return type; }
+
+    public GlazeType getGlaze(){ return glaze; }
+
+    public boolean is_allergen() { return allergen; }
 
     @Override
     public String toString() {

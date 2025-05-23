@@ -1,6 +1,8 @@
 package org.acme.foodpackaging.solver;
 
 import java.time.Duration;
+import java.util.Objects;
+import java.util.Set;
 
 import ai.timefold.solver.core.api.score.buildin.hardmediumsoftlong.HardMediumSoftLongScore;
 import ai.timefold.solver.core.api.score.stream.Constraint;
@@ -9,6 +11,7 @@ import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
 import ai.timefold.solver.core.api.score.stream.Joiners;
 
 import org.acme.foodpackaging.domain.Job;
+import org.acme.foodpackaging.domain.ProductType;
 
 public class FoodPackagingConstraintProvider implements ConstraintProvider {
 
@@ -17,6 +20,11 @@ public class FoodPackagingConstraintProvider implements ConstraintProvider {
         return new Constraint[] {
                 // Hard constraints
                 maxEndDateTime(factory),
+
+                plushMustBeOnLine1(factory),
+                rodOnlyOnLines456(factory),
+                cactusOnlyOnLines123(factory),
+
                 // Medium constraints
                 idealEndDateTime(factory),
                 // Soft constraints
@@ -88,5 +96,34 @@ public class FoodPackagingConstraintProvider implements ConstraintProvider {
                         * Duration.between(job.getStartCleaningDateTime(), job.getStartProductionDateTime()).toMinutes())
                 .asConstraint("Minimize cleaning duration");
     }
+
+    protected Constraint plushMustBeOnLine1(ConstraintFactory factory) {
+        return factory.forEach(Job.class)
+                .filter(job -> job.getLine() != null && job.getProduct() != null)
+                .filter(job -> job.getProduct().getType() == ProductType.PLUSH)
+                .filter(job -> !"1".equals(job.getLine().getId()))
+                .penalizeLong(HardMediumSoftLongScore.ONE_HARD, job -> 1000L)
+                .asConstraint("PLUSH must be on line 1");
+    }
+
+    protected Constraint rodOnlyOnLines456(ConstraintFactory factory) {
+        return factory.forEach(Job.class)
+                .filter(job -> job.getLine() != null && job.getProduct() != null)
+                .filter(job -> job.getProduct().getType() == ProductType.ROD)
+                .filter(job -> !Set.of("4", "5", "6").contains(job.getLine().getId()))
+                .penalizeLong(HardMediumSoftLongScore.ONE_HARD, job -> 1000L)
+                .asConstraint("ROD must be on lines 4, 5, 6");
+    }
+
+    protected Constraint cactusOnlyOnLines123(ConstraintFactory factory) {
+        return factory.forEach(Job.class)
+                .filter(job -> job.getLine() != null && job.getProduct() != null)
+                .filter(job -> job.getProduct().getType() == ProductType.CACTUS)
+                .filter(job -> !Set.of("1", "2", "3").contains(job.getLine().getId()))
+                .penalizeLong(HardMediumSoftLongScore.ONE_HARD, job -> 1000L)
+                .asConstraint("CACTUS must be on lines 1, 2, 3");
+    }
+
+
 
 }
