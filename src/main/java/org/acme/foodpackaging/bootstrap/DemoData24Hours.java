@@ -49,7 +49,7 @@ public class DemoData24Hours {
         String date = "2025-05-20";
         final LocalDate START_DATE = LocalDate.parse(date);
         final LocalDateTime START_DATE_TIME = LocalDateTime.of(START_DATE, LocalTime.MIDNIGHT);
-        final LocalDate END_DATE = START_DATE.plusDays(1);
+        final LocalDate END_DATE = START_DATE.plusDays(2);
         final LocalDateTime END_DATE_TIME = LocalDateTime.of(END_DATE, LocalTime.MIDNIGHT);
 
         PackagingSchedule solution = new PackagingSchedule();
@@ -104,8 +104,8 @@ public class DemoData24Hours {
                         String snm = resultSet.getString("SNM");
                         String name = resultSet.getString("NAME");
 
-                        int defaultDuration = 0; // Это может быть 0!
                         if (quantity == 0) continue;
+                        int defaultDuration =quantity/200;
 
                         Product product = productMap.get(ean13);
                         if (product == null) {
@@ -223,8 +223,9 @@ public class DemoData24Hours {
 
         List<Line> lines = new ArrayList<>(lineCount);
         for(int i=1; i<=lineCount; ++i){
-            String name = "Line" + String.valueOf(i);
-            Line line = new Line(String.valueOf(i), name, "Miku",startDateTime);
+            String lineName = "Line" + String.valueOf(i);
+            String operatorName = "Operator" + String.valueOf(i);
+            Line line = new Line(String.valueOf(i), lineName, operatorName,startDateTime);
             lines.add(line);
         }
         return lines;
@@ -260,8 +261,8 @@ public class DemoData24Hours {
                 quantity,
                 Duration.ofMinutes(duration),
                 startDate,
-                startDate.plusHours(3), // Идеальное время завершения
-                startDate.plusHours(6), // Максимальное время завершения
+                startDate.plusHours(23).plusMinutes(59).plusSeconds(59), // Идеальное время завершения
+                startDate.plusDays(1).plusHours(23).plusMinutes(59).plusSeconds(59), // Максимальное время завершения
                 priority,
                 false
         );

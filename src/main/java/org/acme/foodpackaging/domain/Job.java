@@ -130,35 +130,7 @@ public class Job {
         return product;
     }
 
-    public Duration getDuration() {
-        if (product == null || line == null) {
-            return duration; // либо заранее заданное значение
-        }
-
-        ProductType type = product.getType();
-        String lineId = line.getId();
-
-        return switch (type) {
-            case ROD -> Duration.ofMinutes((long) Math.ceil((double) quantity / 198));
-            case PLUSH -> Duration.ofMinutes((long) Math.ceil((double) quantity / 200));
-            case CACTUS -> {
-                if (lineId.equals("1")) yield Duration.ofMinutes((long) Math.ceil((double) quantity / 200));
-                else if (lineId.equals("2")) yield Duration.ofMinutes((long) Math.ceil((double) quantity / 196));
-                else if (lineId.equals("3")) yield Duration.ofMinutes((long) Math.ceil((double) quantity / 206));
-                else yield Duration.ZERO; // запрещенные линии — может использоваться доп. constraint
-            }
-            case CLASSIC -> {
-                Integer speed = CLASSIC_LINE_SPEEDS.get(lineId);
-                if (speed != null) {
-                    yield Duration.ofMinutes((long) Math.ceil((double) quantity / speed));
-                } else {
-                    yield Duration.ZERO;
-                }
-            }
-            default -> duration;
-        };
-    }
-
+    public Duration getDuration() { return duration; }
     public LocalDateTime getMinStartTime() {
         return minStartTime;
     }
