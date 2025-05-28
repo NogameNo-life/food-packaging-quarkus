@@ -35,7 +35,7 @@ public class DemoData24Hours {
     final int FROM_ROD_TO_CLASSIC = 150;
     final int ROD_DIFFERENT_FILLING = 50;
     final int DIFFERENT_CURD_MASS = 20;
-
+    private ProductNameShortener shortener;
 
     private static final Map<String, Boolean> IS_ALLERGEN = Map.of(
             "4810268043727", true,
@@ -53,6 +53,7 @@ public class DemoData24Hours {
         final LocalDateTime END_DATE_TIME = LocalDateTime.of(END_DATE, LocalTime.of(4,0));
 
         PackagingSchedule solution = new PackagingSchedule();
+        this.shortener = new ProductNameShortener();
 
         solution.setWorkCalendar(new WorkCalendar(START_DATE, END_DATE));
 
@@ -248,20 +249,15 @@ public class DemoData24Hours {
     }
 
     private Job createJob(String id, Product product, int quantity, int duration, int priority, LocalDateTime startDate) {
-        Pattern pattern = Pattern.compile("\"([^\"]+)\"");
-        String jobName = product.getName();
-        Matcher matcher = pattern.matcher(jobName);
-        if (matcher.find()) {
-            jobName = matcher.group(1); // Внутри кавычек
-        }
+        String jobName = shortener.getShortName(product.getId(), product.getName());
         return new Job(
                 id,
-                jobName + " #" + id,
+                jobName,
                 product,
                 quantity,
                 Duration.ofMinutes(duration),
                 startDate,
-                startDate.plusDays(1).withHour(2).withMinute(30), // Идеальное время завершения
+                startDate.plusDays(1).withHour(2).withMinute(0), // Идеальное время завершения
                 startDate.plusDays(1).withHour(4).withMinute(0), // Максимальное время завершения
                 priority,
                 false
