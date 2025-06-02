@@ -12,6 +12,7 @@ public class Product {
     private String name;
     private ProductType type;
     private GlazeType glaze;
+    private FillingType filling;
     private boolean allergen;
     /** The map key is previous product on assembly line. */
     private Map<Product, Duration> cleaningDurations;
@@ -28,6 +29,7 @@ public class Product {
         this.id = id;
         this.name = name;
         this.type = type;
+        this.filling = FillingType.fromProduct(id);
         this.glaze = GlazeType.fromProduct(id, type);
         this.allergen = allergen;
     }
@@ -55,6 +57,8 @@ public class Product {
     // ************************************************************************
     // Getters and setters
     // ************************************************************************
+
+    public FillingType getFilling(){ return filling; }
 
     public String getId() {
         return id;

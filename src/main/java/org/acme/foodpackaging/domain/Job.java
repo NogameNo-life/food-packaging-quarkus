@@ -2,7 +2,6 @@ package org.acme.foodpackaging.domain;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.entity.PlanningPin;
@@ -20,6 +19,8 @@ public class Job {
     @PlanningId
     private String id;
     private String name;
+    private String np;
+    private transient DurationProvider durationProvider;
 
     private Product product;
     private int quantity;
@@ -53,15 +54,6 @@ public class Job {
     @CascadingUpdateShadowVariable(targetMethodName = "updateStartCleaningDateTime")
     private LocalDateTime endDateTime;
 
-    private static final Map<String, Integer> CLASSIC_LINE_SPEEDS = Map.of(
-            "1", 200,
-            "2", 196,
-            "3", 206,
-            "4", 220,
-            "5", 220,
-            "6", 220
-    );
-
     // No-arg constructor required for Timefold
     public Job() {
     }
@@ -86,13 +78,15 @@ public class Job {
         this.pinned = pinned;
     }
 
-    public Job(String id, String name, Product product, int quantity, Duration duration, LocalDateTime minStartTime, LocalDateTime idealEndTime, LocalDateTime maxEndTime, int priority, boolean pinned,
+    public Job(String id, String name, String np, Product product, int quantity, Duration duration, DurationProvider provider, LocalDateTime minStartTime, LocalDateTime idealEndTime, LocalDateTime maxEndTime, int priority, boolean pinned,
                LocalDateTime startCleaningDateTime, LocalDateTime startProductionDateTime) {
         this.id = id;
         this.name = name;
+        this.np = np;
         this.product = product;
         this.quantity = quantity;
         this.duration = duration;
+        this.durationProvider = provider;
         this.minStartTime = minStartTime;
         this.idealEndTime = idealEndTime;
         this.maxEndTime = maxEndTime;
@@ -103,8 +97,8 @@ public class Job {
         this.pinned = pinned;
     }
 
-    public Job(String id, String name, Product product, int quantity, Duration duration, LocalDateTime minStartTime, LocalDateTime idealEndTime, LocalDateTime maxEndTime, int priority, boolean pinned) {
-        this(id, name, product, quantity, duration, minStartTime, idealEndTime, maxEndTime, priority, pinned, null, null);
+    public Job(String id, String name, String np, Product product, int quantity, Duration duration, DurationProvider provider, LocalDateTime minStartTime, LocalDateTime idealEndTime, LocalDateTime maxEndTime, int priority, boolean pinned) {
+        this(id, name, np, product, quantity, duration, provider, minStartTime, idealEndTime, maxEndTime, priority, pinned, null, null);
     }
 
     @Override
@@ -131,34 +125,11 @@ public class Job {
     }
 
     public Duration getDuration() {
-        if (product == null || line == null) {
-            return duration; // либо заранее заданное значение
+        if (duration == Duration.ZERO) {
+            return durationProvider.calculate(this.product, this.line, this.quantity);
         }
-
-        ProductType type = product.getType();
-        String lineId = line.getId();
-
-        return switch (type) {
-            case ROD -> Duration.ofMinutes((long) Math.ceil((double) quantity / 198));
-            case PLUSH -> Duration.ofMinutes((long) Math.ceil((double) quantity / 200));
-            case CACTUS -> {
-                if (lineId.equals("1")) yield Duration.ofMinutes((long) Math.ceil((double) quantity / 200));
-                else if (lineId.equals("2")) yield Duration.ofMinutes((long) Math.ceil((double) quantity / 196));
-                else if (lineId.equals("3")) yield Duration.ofMinutes((long) Math.ceil((double) quantity / 206));
-                else yield Duration.ZERO; // запрещенные линии — может использоваться доп. constraint
-            }
-            case CLASSIC -> {
-                Integer speed = CLASSIC_LINE_SPEEDS.get(lineId);
-                if (speed != null) {
-                    yield Duration.ofMinutes((long) Math.ceil((double) quantity / speed));
-                } else {
-                    yield Duration.ZERO;
-                }
-            }
-            default -> duration;
-        };
+        return duration;
     }
-
     public LocalDateTime getMinStartTime() {
         return minStartTime;
     }
