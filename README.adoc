@@ -5,7 +5,6 @@ Schedule food packaging orders to manufacturing lines, to minimize downtime and 
 image::./food-packaging-screenshot.png[]
 
 * <<run,Run the application>>
-* <<enterprise,Run the application with Timefold Solver Enterprise Edition>>
 * <<package,Run the packaged application>>
 * <<container,Run the application in a container>>
 * <<native,Run it native>>
@@ -22,13 +21,13 @@ $ sdk install maven
 [[run]]
 == Run the application
 
-. Git clone the timefold-quickstarts repo and navigate to this directory:
+. Git clone the food-packaging-quarkus repo and navigate to this directory:
 +
 [source, shell]
 ----
-$ git clone https://github.com/TimefoldAI/timefold-quickstarts.git
+$ git clone git@github.com:NogameNo-life/food-packaging-quarkus.git
 ...
-$ cd timefold-quickstarts/java/food-packaging
+$ cd food-packaging-quarkus
 ----
 
 . Start the application with Maven:
@@ -36,53 +35,6 @@ $ cd timefold-quickstarts/java/food-packaging
 [source, shell]
 ----
 $ mvn quarkus:dev
-----
-
-. Visit http://localhost:8080 in your browser.
-
-. Click on the *Solve* button.
-
-Then try _live coding_:
-
-. Make some changes in the source code.
-. Refresh your browser (F5).
-
-Notice that those changes are immediately in effect.
-
-[[enterprise]]
-== Run the application with Timefold Solver Enterprise Edition
-
-For high-scalability use cases, switch to https://docs.timefold.ai/timefold-solver/latest/enterprise-edition/enterprise-edition[Timefold Solver Enterprise Edition],
-our commercial offering.
-https://timefold.ai/contact[Contact Timefold] to obtain the credentials required to access our private Enterprise Maven repository.
-
-. Create `.m2/settings.xml` in your home directory with the following content:
-+
---
-[source,xml,options="nowrap"]
-----
-<settings>
-  ...
-  <servers>
-    <server>
-      <!-- Replace "my_username" and "my_password" with credentials obtained from a Timefold representative. -->
-      <id>timefold-solver-enterprise</id>
-      <username>my_username</username>
-      <password>my_password</password>
-    </server>
-  </servers>
-  ...
-</settings>
-----
-
-See https://maven.apache.org/settings.html[Settings Reference] for more information on Maven settings.
---
-
-. Start the application with Maven:
-+
-[source,shell]
-----
-$ mvn clean quarkus:dev -Denterprise
 ----
 
 . Visit http://localhost:8080 in your browser.
