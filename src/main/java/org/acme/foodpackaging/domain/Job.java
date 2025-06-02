@@ -2,7 +2,6 @@ package org.acme.foodpackaging.domain;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.entity.PlanningPin;
