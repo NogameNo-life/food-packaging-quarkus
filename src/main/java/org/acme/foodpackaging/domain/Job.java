@@ -20,6 +20,8 @@ public class Job {
     @PlanningId
     private String id;
     private String name;
+    private String np;
+    private transient DurationProvider durationProvider;
 
     private Product product;
     private int quantity;
@@ -53,15 +55,6 @@ public class Job {
     @CascadingUpdateShadowVariable(targetMethodName = "updateStartCleaningDateTime")
     private LocalDateTime endDateTime;
 
-    private static final Map<String, Integer> CLASSIC_LINE_SPEEDS = Map.of(
-            "1", 200,
-            "2", 196,
-            "3", 206,
-            "4", 220,
-            "5", 220,
-            "6", 220
-    );
-
     // No-arg constructor required for Timefold
     public Job() {
     }
@@ -86,13 +79,15 @@ public class Job {
         this.pinned = pinned;
     }
 
-    public Job(String id, String name, Product product, int quantity, Duration duration, LocalDateTime minStartTime, LocalDateTime idealEndTime, LocalDateTime maxEndTime, int priority, boolean pinned,
+    public Job(String id, String name, String np, Product product, int quantity, Duration duration, DurationProvider provider, LocalDateTime minStartTime, LocalDateTime idealEndTime, LocalDateTime maxEndTime, int priority, boolean pinned,
                LocalDateTime startCleaningDateTime, LocalDateTime startProductionDateTime) {
         this.id = id;
         this.name = name;
+        this.np = np;
         this.product = product;
         this.quantity = quantity;
         this.duration = duration;
+        this.durationProvider = provider;
         this.minStartTime = minStartTime;
         this.idealEndTime = idealEndTime;
         this.maxEndTime = maxEndTime;
@@ -103,8 +98,8 @@ public class Job {
         this.pinned = pinned;
     }
 
-    public Job(String id, String name, Product product, int quantity, Duration duration, LocalDateTime minStartTime, LocalDateTime idealEndTime, LocalDateTime maxEndTime, int priority, boolean pinned) {
-        this(id, name, product, quantity, duration, minStartTime, idealEndTime, maxEndTime, priority, pinned, null, null);
+    public Job(String id, String name, String np, Product product, int quantity, Duration duration, DurationProvider provider, LocalDateTime minStartTime, LocalDateTime idealEndTime, LocalDateTime maxEndTime, int priority, boolean pinned) {
+        this(id, name, np, product, quantity, duration, provider, minStartTime, idealEndTime, maxEndTime, priority, pinned, null, null);
     }
 
     @Override
@@ -130,7 +125,12 @@ public class Job {
         return product;
     }
 
-    public Duration getDuration() { return duration; }
+    public Duration getDuration() {
+        if (duration == Duration.ZERO) {
+            return durationProvider.calculate(this.product, this.line, this.quantity);
+        }
+        return duration;
+    }
     public LocalDateTime getMinStartTime() {
         return minStartTime;
     }
