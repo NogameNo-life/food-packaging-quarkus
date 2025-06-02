@@ -9,10 +9,8 @@ import org.acme.foodpackaging.domain.*;
 import org.acme.foodpackaging.persistence.PackagingScheduleRepository;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.util.regex.*;
 import java.sql.*;
 import java.time.*;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
 @ApplicationScoped
@@ -35,6 +33,9 @@ public class DemoData24Hours {
     final int FROM_ROD_TO_CLASSIC = 150;
     final int ROD_DIFFERENT_FILLING = 50;
     final int DIFFERENT_CURD_MASS = 20;
+    final int CHANGING_PACKAGING = 10;
+    final int TO_NONE_FILLING_ROD = 40;
+
     private ProductNameShortener shortener;
 
     private static final Map<String, Boolean> IS_ALLERGEN = Map.of(
@@ -46,13 +47,14 @@ public class DemoData24Hours {
 
     @Transactional
     public void generateDemoData(@Observes StartupEvent startupEvent) {
-        String date = "2025-05-20";
+        String date = "2025-05-25";
         final LocalDate START_DATE = LocalDate.parse(date);
         final LocalDateTime START_DATE_TIME = LocalDateTime.of(START_DATE, LocalTime.of(8,0));
         final LocalDate END_DATE = START_DATE.plusDays(1);
         final LocalDateTime END_DATE_TIME = LocalDateTime.of(END_DATE, LocalTime.of(4,0));
 
         PackagingSchedule solution = new PackagingSchedule();
+        DurationProvider provider = new DurationProvider();
         this.shortener = new ProductNameShortener();
 
         solution.setWorkCalendar(new WorkCalendar(START_DATE, END_DATE));
@@ -84,6 +86,7 @@ public class DemoData24Hours {
                 preparedStatement.setDouble(3, 0.1);                  // Параметр для m.MASSA
 
                 int id=0;
+                int duration = 0;
                 // Выполнение запроса
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     // Обработка результата
@@ -105,22 +108,30 @@ public class DemoData24Hours {
                         String snm = resultSet.getString("SNM");
                         String name = resultSet.getString("NAME");
 
-                        if (quantity == 0) continue;
-                        int defaultDuration =quantity/200;
-
                         Product product = productMap.get(ean13);
                         if (product == null) {
                             product = createProduct(ean13, name);
                             productMap.put(ean13, product);
                             products.add(product); // Добавляем только один раз
                         }
+                        if(product.getType() == ProductType.ROD){
 
+                            duration = quantity/198 + 4;
+                        }
+                        else if(product.getType() == ProductType.CACTUS){
+                            duration = quantity/184;
+                        }
+                        else if(product.getType() == ProductType.PLUSH){
+                            duration = quantity/164;
+                        }
                         // Создание задания
                         Job job = createJob(
                                 String.valueOf(++id),
+                                np,
                                 product,
                                 quantity,
-                                defaultDuration,
+                                duration,
+                                provider,
                                 DEFAULT_PRIORITY,
                                 START_DATE_TIME
                         );
@@ -158,14 +169,13 @@ public class DemoData24Hours {
             for (Product previousProduct : products) {
                 Duration cleaningDuration;
 
-
                 // 1. Одинаковый продукт → без чистки
-                 if (currentProduct.getId().equals(previousProduct.getId())) {
+                if (currentProduct.getId().equals(previousProduct.getId())) {
                     cleaningDuration = Duration.ZERO;
                 }
                 // 2. Один из продуктов — CACTUS → всегда 3 часа
                 else if (currentProduct.getType() == ProductType.CACTUS && previousProduct.getType() != ProductType.CACTUS
-                 || currentProduct.getType() != ProductType.CACTUS && previousProduct.getType() == ProductType.CACTUS) {
+                        || currentProduct.getType() != ProductType.CACTUS && previousProduct.getType() == ProductType.CACTUS) {
                     cleaningDuration = Duration.ofMinutes(CACTUS_CLEANING);
                 }
                 // 3. Предыдущий аллерген, текущий — нет
@@ -177,37 +187,54 @@ public class DemoData24Hours {
                         && previousProduct.getType() == ProductType.ROD) {
                     cleaningDuration = Duration.ofMinutes(FROM_ROD_TO_CLASSIC);
                 }
-                // 5. Оба ROD, разные глазури
+                // 5. Текущий ROD без начинки, предыдущий ROD с начинкой
+                else if(currentProduct.getType() == ProductType.ROD
+                        && previousProduct.getType() == ProductType.ROD
+                        && currentProduct.getFilling() == FillingType.NONE){
+                    cleaningDuration = Duration.ofMinutes(TO_NONE_FILLING_ROD);
+                }
+                // 6. Оба ROD, разные глазури
+                else if (currentProduct.getType() == ProductType.ROD
+                        && previousProduct.getType() == ProductType.ROD
+                        && !Objects.equals(previousProduct.getId(), currentProduct.getId())
+                        && previousProduct.getGlaze().equals(currentProduct.getGlaze())
+                        && previousProduct.getFilling().equals(currentProduct.getFilling()
+                )
+                ) {
+                    cleaningDuration = Duration.ofMinutes(CHANGING_PACKAGING);
+                }
+                // 7. Оба ROD, разные начинки
                 else if (currentProduct.getType() == ProductType.ROD
                         && previousProduct.getType() == ProductType.ROD
                         && !previousProduct.getGlaze().equals(GlazeType.C65_47)) {
                     cleaningDuration = Duration.ofMinutes(ROD_DIFFERENT_FILLING);
                 }
-                // 6. Оба аллергены, разные глазури
+
+                // 8. Оба аллергены, разные глазури
                 else if (currentProduct.is_allergen() && previousProduct.is_allergen()
                         && currentProduct.getType() == ProductType.CLASSIC
                         && previousProduct.getType() == ProductType.CLASSIC
                         && !currentProduct.getGlaze().equals(previousProduct.getGlaze())) {
                     cleaningDuration = Duration.ofMinutes(ALLERGEN_DIFFERENT_GLAZE);
                 }
-                // 7. Текущий аллерген, предыдущий — нет
+                // 9. Текущий аллерген, предыдущий — нет
                 else if (!currentProduct.is_allergen() && previousProduct.is_allergen()) {
                     cleaningDuration = Duration.ofMinutes(CLEANING_AFTER_ALLERGEN);
                 }
-                // 8. Оба CLASSIC, разные глазури
+                // 10. Оба CLASSIC, разные глазури
                 else if (currentProduct.getType() == ProductType.CLASSIC
                         && previousProduct.getType() == ProductType.CLASSIC
                         && !currentProduct.getGlaze().equals(previousProduct.getGlaze())) {
                     int minutes = MIN_CLASSIC_GLAZE + random.nextInt(MAX_CLASSIC_GLAZE - MIN_CLASSIC_GLAZE);
                     cleaningDuration = Duration.ofMinutes(minutes);
                 }
-                // 9. Одинаковый тип и глазурь, но разные ID
+                // 11. Одинаковый тип и глазурь, но разные ID
                 else if (currentProduct.getType() == previousProduct.getType()
                         && currentProduct.getGlaze().equals(previousProduct.getGlaze())
                         && !currentProduct.getId().equals(previousProduct.getId())) {
                     cleaningDuration = Duration.ofMinutes(DIFFERENT_CURD_MASS);
                 }
-                // 10. По умолчанию
+                // 12. По умолчанию
                 else {
                     cleaningDuration = Duration.ofMinutes(MAX_CLASSIC_GLAZE);
                 }
@@ -248,22 +275,22 @@ public class DemoData24Hours {
         return true;
     }
 
-    private Job createJob(String id, Product product, int quantity, int duration, int priority, LocalDateTime startDate) {
+    private Job createJob(String id, String np, Product product, int quantity, int duration, DurationProvider provider, int priority, LocalDateTime startDate) {
         String jobName = shortener.getShortName(product.getId(), product.getName());
         return new Job(
                 id,
                 jobName,
+                np,
                 product,
                 quantity,
                 Duration.ofMinutes(duration),
+                provider,
                 startDate,
                 startDate.plusDays(1).withHour(2).withMinute(0), // Идеальное время завершения
                 startDate.plusDays(1).withHour(4).withMinute(0), // Максимальное время завершения
                 priority,
                 false
         );
-
     }
-
 }
 
