@@ -26,7 +26,7 @@ public class ProductNameShortener {
         productMap.put("4810268050671", "ТвСгущенка");
         productMap.put("4810268050640", "ТвШоколад");
         productMap.put("4810268050664", "ТвМанго");
-        productMap.put("4810268050657", "ТпКлубника");
+        productMap.put("4810268050657", "ТвКлубника");
         productMap.put("4810268054969", "ТпФундук");
         productMap.put("4810268056826", "ТпКарамельАр");
         productMap.put("4810268050121", "ТпКлубника");
