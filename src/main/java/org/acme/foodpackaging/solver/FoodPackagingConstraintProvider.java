@@ -21,9 +21,10 @@ public class FoodPackagingConstraintProvider implements ConstraintProvider {
                 cactusOnlyOnLines123(factory),
                 classicOnlyOnLines1236(factory),
                 // Medium constraints
-                idealEndDateTime(factory),
-              //  minimizeCleaningDuration(factory),
+                // idealEndDateTime(factory),
+                // minimizeCleaningDuration(factory),
                 // Soft constraints
+                minimizeCleaningCount(factory),
                 minimizeMakespan(factory),
         };
     }
@@ -85,6 +86,14 @@ public class FoodPackagingConstraintProvider implements ConstraintProvider {
                 .penalizeLong(HardMediumSoftLongScore.ONE_MEDIUM,
                         job -> Duration.between(job.getIdealEndTime(), job.getEndDateTime()).toMinutes())
                 .asConstraint("Ideal end date time");
+    }
+
+    protected Constraint minimizeCleaningCount(ConstraintFactory factory) {
+        return factory.forEach(Job.class)
+                .filter(job -> job.getStartProductionDateTime() != null)
+                .filter(job -> Duration.between(job.getStartCleaningDateTime(), job.getStartProductionDateTime()).toMinutes() > 1)
+                .penalizeLong(HardMediumSoftLongScore.ONE_MEDIUM, job -> 1000L)
+                .asConstraint("Minimize cleaning count");
     }
     // ************************************************************************
     // Soft constraints

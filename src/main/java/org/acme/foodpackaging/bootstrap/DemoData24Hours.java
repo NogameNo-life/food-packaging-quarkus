@@ -67,7 +67,7 @@ public class DemoData24Hours {
         List<Product> products = new ArrayList<>();
         List<Job> jobs = new ArrayList<>();
 
-        String url = "jdbc:sqlserver://10.164.30.246;databaseName=MES;integratedSecurity=true;encrypt=true;trustServerCertificate=true";
+        String url = "jdbc:sqlserver://10.164.30.246;databaseName=MES;integratedSecurity=true;encrypt=true;trustServerCertificate=true;";
 
         String sqlQuery = "SELECT v.KSK, v.SNPZ, v.DTI, v.DTM, v.KMC, v.EMK, v.KOLMV, v.MASSA, v.KOLEV, v.NP, v.UX, "
                 + "m.MASSA, m.EAN13, m.SNM, m.NAME "
@@ -89,6 +89,7 @@ public class DemoData24Hours {
                 int duration = 0;
                 // Выполнение запроса
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
+
                     // Обработка результата
 
                     while (resultSet.next()) {
@@ -165,33 +166,40 @@ public class DemoData24Hours {
 
         for (Product currentProduct : products) {
             Map<Product, Duration> cleaningDurationMap = new HashMap<>(products.size());
+            Map<Product, Integer> cleaningPenaltyMap = new HashMap<>(products.size());
 
             for (Product previousProduct : products) {
                 Duration cleaningDuration;
+                Integer cleaningPenalty;
 
                 // 1. Одинаковый продукт → без чистки
                 if (currentProduct.getId().equals(previousProduct.getId())) {
                     cleaningDuration = Duration.ZERO;
+                    cleaningPenalty = 0;
                 }
                 // 2. Один из продуктов — CACTUS → всегда 3 часа
                 else if (currentProduct.getType() == ProductType.CACTUS && previousProduct.getType() != ProductType.CACTUS
                         || currentProduct.getType() != ProductType.CACTUS && previousProduct.getType() == ProductType.CACTUS) {
                     cleaningDuration = Duration.ofMinutes(CACTUS_CLEANING);
+                    cleaningPenalty = CACTUS_CLEANING;
                 }
                 // 3. Предыдущий аллерген, текущий — нет
                 else if (previousProduct.is_allergen() && !currentProduct.is_allergen()) {
                     cleaningDuration = Duration.ofMinutes(CLEANING_AFTER_ALLERGEN);
+                    cleaningPenalty = CLEANING_AFTER_ALLERGEN;
                 }
                 // 4. Текущий CLASSIC, предыдущий ROD
                 else if (currentProduct.getType() == ProductType.CLASSIC
                         && previousProduct.getType() == ProductType.ROD) {
                     cleaningDuration = Duration.ofMinutes(FROM_ROD_TO_CLASSIC);
+                    cleaningPenalty = FROM_ROD_TO_CLASSIC;
                 }
                 // 5. Текущий ROD без начинки, предыдущий ROD с начинкой
                 else if(currentProduct.getType() == ProductType.ROD
                         && previousProduct.getType() == ProductType.ROD
                         && currentProduct.getFilling() == FillingType.NONE){
                     cleaningDuration = Duration.ofMinutes(TO_NONE_FILLING_ROD);
+                    cleaningPenalty = TO_NONE_FILLING_ROD;
                 }
                 // 6. Оба ROD, разные глазури
                 else if (currentProduct.getType() == ProductType.ROD
@@ -202,12 +210,14 @@ public class DemoData24Hours {
                 )
                 ) {
                     cleaningDuration = Duration.ofMinutes(CHANGING_PACKAGING);
+                    cleaningPenalty = CHANGING_PACKAGING;
                 }
                 // 7. Оба ROD, разные начинки
                 else if (currentProduct.getType() == ProductType.ROD
                         && previousProduct.getType() == ProductType.ROD
                         && !previousProduct.getGlaze().equals(GlazeType.C65_47)) {
                     cleaningDuration = Duration.ofMinutes(ROD_DIFFERENT_FILLING);
+                    cleaningPenalty = ROD_DIFFERENT_FILLING;
                 }
 
                 // 8. Оба аллергены, разные глазури
@@ -216,10 +226,12 @@ public class DemoData24Hours {
                         && previousProduct.getType() == ProductType.CLASSIC
                         && !currentProduct.getGlaze().equals(previousProduct.getGlaze())) {
                     cleaningDuration = Duration.ofMinutes(ALLERGEN_DIFFERENT_GLAZE);
+                    cleaningPenalty = ALLERGEN_DIFFERENT_GLAZE;
                 }
                 // 9. Текущий аллерген, предыдущий — нет
                 else if (!currentProduct.is_allergen() && previousProduct.is_allergen()) {
                     cleaningDuration = Duration.ofMinutes(CLEANING_AFTER_ALLERGEN);
+                    cleaningPenalty = CLEANING_AFTER_ALLERGEN;
                 }
                 // 10. Оба CLASSIC, разные глазури
                 else if (currentProduct.getType() == ProductType.CLASSIC
@@ -227,22 +239,27 @@ public class DemoData24Hours {
                         && !currentProduct.getGlaze().equals(previousProduct.getGlaze())) {
                     int minutes = MIN_CLASSIC_GLAZE + random.nextInt(MAX_CLASSIC_GLAZE - MIN_CLASSIC_GLAZE);
                     cleaningDuration = Duration.ofMinutes(minutes);
+                    cleaningPenalty = minutes;
                 }
                 // 11. Одинаковый тип и глазурь, но разные ID
                 else if (currentProduct.getType() == previousProduct.getType()
                         && currentProduct.getGlaze().equals(previousProduct.getGlaze())
                         && !currentProduct.getId().equals(previousProduct.getId())) {
                     cleaningDuration = Duration.ofMinutes(DIFFERENT_CURD_MASS);
+                    cleaningPenalty = DIFFERENT_CURD_MASS;
                 }
                 // 12. По умолчанию
                 else {
                     cleaningDuration = Duration.ofMinutes(MAX_CLASSIC_GLAZE);
+                    cleaningPenalty = MAX_CLASSIC_GLAZE;
                 }
 
                 cleaningDurationMap.put(previousProduct, cleaningDuration);
+                cleaningPenaltyMap.put(previousProduct, cleaningPenalty);
             }
 
             currentProduct.setCleaningDurations(cleaningDurationMap);
+            currentProduct.setCleaningPenalties(cleaningPenaltyMap);
         }
 
     }
