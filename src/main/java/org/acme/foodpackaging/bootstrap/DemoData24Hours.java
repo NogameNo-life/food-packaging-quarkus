@@ -53,8 +53,6 @@ public class DemoData24Hours {
         final LocalDate END_DATE = START_DATE.plusDays(1);
         final LocalDateTime END_DATE_TIME = LocalDateTime.of(END_DATE, LocalTime.of(4,0));
 
-        //System.out.println("Start generate");
-
         PackagingSchedule solution = new PackagingSchedule();
         DurationProvider provider = new DurationProvider();
         this.shortener = new ProductNameShortener();
@@ -69,7 +67,6 @@ public class DemoData24Hours {
         List<Product> products = new ArrayList<>();
         List<Job> jobs = new ArrayList<>();
 
-//        Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
         String url = "jdbc:sqlserver://10.164.30.246;databaseName=MES;integratedSecurity=true;encrypt=true;trustServerCertificate=true;";
 
         String sqlQuery = "SELECT v.KSK, v.SNPZ, v.DTI, v.DTM, v.KMC, v.EMK, v.KOLMV, v.MASSA, v.KOLEV, v.NP, v.UX, "
@@ -80,11 +77,8 @@ public class DemoData24Hours {
 
         try {
             // Установка соединения
-            //System.out.println("Start Connection");
             try (Connection connection = DriverManager.getConnection(url);
                  PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-
-                //System.out.println("Start executeQuery");
 
                 // Установка параметров для SQL-запроса
                 preparedStatement.setString(1, date + "T00:00:00");     // Параметр для v.DTI
@@ -95,8 +89,6 @@ public class DemoData24Hours {
                 int duration = 0;
                 // Выполнение запроса
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
-
-                    //System.out.println("End executeQuery");
 
                     // Обработка результата
 
@@ -162,7 +154,6 @@ public class DemoData24Hours {
         solution.setJobs(jobs);
 
         repository.write(solution);
-        //System.out.println("End generate");
     }
 
     private Product createProduct(String id, String name) {
