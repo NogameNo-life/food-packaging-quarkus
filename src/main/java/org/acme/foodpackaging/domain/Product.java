@@ -16,6 +16,7 @@ public class Product {
     private boolean allergen;
     /** The map key is previous product on assembly line. */
     private Map<Product, Duration> cleaningDurations;
+    private Map<Product, Integer> cleaningPenalties;
 
     public Product() {
     }
@@ -54,6 +55,15 @@ public class Product {
         return cleanupDuration;
     }
 
+    public Integer getCleanupPenalties(Product previousProduct) {
+        Integer cleanupPenalty = cleaningPenalties.get(previousProduct);
+        if (cleanupPenalty == null) {
+            throw new IllegalArgumentException("Cleanup penalty previousProduct (" + previousProduct
+                    + ") to toProduct (" + this + ") is missing.");
+        }
+        return cleanupPenalty;
+    }
+
     // ************************************************************************
     // Getters and setters
     // ************************************************************************
@@ -80,4 +90,11 @@ public class Product {
         this.cleaningDurations = cleaningDurations;
     }
 
+    public Map<Product, Integer> getCleaningPenalties() {
+        return cleaningPenalties;
+    }
+
+    public void setCleaningPenalties(Map<Product, Integer> cleaningPenalties) {
+        this.cleaningPenalties = cleaningPenalties;
+    }
 }
