@@ -34,6 +34,7 @@ public class ProductNameShortener {
         productMap.put("4810268050138", "ТпШоколад");
         productMap.put("4810268044984", "вПлюш");
         productMap.put("4810268044977", "кПлюш");
+        productMap.put("4810268049866", "МишкаСгущенка");
     }
 
     public String getShortName(String ean13, String jobName) {
